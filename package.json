@@ -29,6 +29,11 @@
   "bugs": {
     "url": "https://github.com/11joselu/less-incremental-build/issues"
   },
+  "husky": {
+    "hooks": {
+      "pre-commit": "npm test"
+    }
+  },
   "homepage": "https://github.com/11joselu/less-incremental-build",
   "dependencies": {
     "chai": "4.2.0",
@@ -43,6 +48,7 @@
   },
   "devDependencies": {
     "coveralls": "^3.0.3",
+    "husky": "^1.3.1",
     "mocha-lcov-reporter": "^1.3.0",
     "nyc": "^13.3.0"
   }
