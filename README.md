@@ -8,23 +8,23 @@
 [![Build Status](https://travis-ci.com/11joselu/less-incremental-builder.svg?branch=master)](https://travis-ci.com/11joselu/less-incremental-builder)
 [![Coverage Status](https://coveralls.io/repos/github/11joselu/less-incremental-builder/badge.svg?branch=master)](https://coveralls.io/github/11joselu/less-incremental-builder?branch=master)
 
-<h2 align="center">Install</h2>
+<h2>Install</h2>
 
 ```bash
 npm install less-incremental-build --save-dev
 ```
 
-<h2 align="center">Usage</h2>
+<h2>Usage</h2>
 
 ```bash
 node less-incremental-build --src <main_file>.less --output <output>.css
 ```
 
-<h2 align="center">Maintainers</h2>
+<h2>Maintainers</h2>
 
 <table>
   <tr>
-    <td align="center">
+    <td>
       <a href="https://github.com/11joselu"><img width="150" height="150" src="https://avatars0.githubusercontent.com/u/8685132?s=460&v=4"></a><br>
       <a href="https://github.com/11joselu">Jose Cabrera</a>
     </td>
