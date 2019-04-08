@@ -1,12 +1,9 @@
 const chokidar = require('chokidar');
-const less = require('less');
 const vfs = require('vinyl-fs');
 const fs = require('fs');
 const through = require('through2').obj;
 const argv = require('yargs').argv
-const {
-  relative
-} = require('path')
+const path = require('path')
 
 const logger = require('./lib/logger');
 const {
@@ -19,41 +16,34 @@ const {
   validateArguments
 } = require('./lib/validator/paramsValidator');
 
-console.reset();
+const Parser = require('./lib/compiler/Parser');
 
-const hashMap = {};
 const cwd = process.cwd();
-const hashPlugin = require('./lib/lessPlugin/hashPlugin')(hashMap, cwd);
-
 const mainFile = argv.src;
 const output = argv.output;
 
 validateArguments(argv);
-
 mkdirp(output);
-
-const lessCompiler = (content) => {
-  return less.render(content, {
-    paths,
-    plugins: [hashPlugin]
-  })
-}
 
 const mainGraph = loadGraph(mainFile);
 const watchingQueue = Object.keys(mainGraph.index);
-const paths = mainGraph.foundedPaths.map(p => relative(cwd, p));
-// TODO: Change this line by resolving variables/mixins paths. May cause a performance issue in larges projects
-const importantFiles = watchingQueue.map((path) => `@import (reference) '${path}'`);
+const paths = mainGraph.foundedPaths.map(p => path.relative(cwd, p) + '/');
+
+if (!paths.length) {
+  paths.push(path, path.dirname(mainFile));
+}
+
+console.reset();
 
 let rootFile = null;
 let isFirstBuildValid = false;
 
 const watcher = chokidar.watch(watchingQueue);
 
-const isMainFile = (path) => {
-  const relativePath = relative(cwd, path);
+const parser = new Parser(paths, cwd);
 
-  return mainFile.indexOf(relativePath) >= 0;
+const isMainFile = (filePath) => {
+  return mainFile === path.relative(cwd, filePath);
 }
 
 const compileLess = (path, isMainFile = false) => {
@@ -81,13 +71,15 @@ const compileLess = (path, isMainFile = false) => {
       }
 
       if (!isMainFile) {
+        // TODO: Change this line by resolving variables/mixins paths. May cause a performance issue in larges projects
+        const importantFiles = watchingQueue.map((path) => `@import (reference) '${path}'`);
         const joined = importantFiles.join(';\n');
         str = joined + ';' + str;
       }
 
       logger.logInfoBuild(path);
 
-      lessCompiler(str)
+      parser.render(str)
         .then(function ({
           css
         }) {
@@ -128,7 +120,12 @@ const compileLess = (path, isMainFile = false) => {
 }
 
 const replaceContentInMainFile = (path, css) => {
-  const hash = hashMap[path];
+  const hash = parser.getFileHash(path);
+
+  if (!hash) {
+    return;
+  }
+
   const re = new RegExp(`(\\/\\*${hash}\\*\\/)(.|\\n)*?\\/\\*${hash}\\*\\/`, "g");
 
   let currentContent = rootFile.contents.toString();

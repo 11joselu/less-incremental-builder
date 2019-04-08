@@ -1,6 +1,6 @@
 {
   "name": "less-incremental-builder",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Build less file with a incremental builder",
   "main": "lib/index.js",
   "scripts": {
@@ -15,7 +15,14 @@
     "npm": ">=5.4.2"
   },
   "author": "Jose Cabrera <joselu11cabrera@gmail.com>",
-  "keywords": ["less", "incremental", "build", "less-build", "builder", "less builder"],
+  "keywords": [
+    "less",
+    "incremental",
+    "build",
+    "less-build",
+    "builder",
+    "less builder"
+  ],
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/11joselu/less-incremental-build/issues"
@@ -27,7 +34,7 @@
     "chokidar": "2.1.5",
     "less": "3.9.0",
     "mocha": "6.0.2",
-    "sass-graph": "https://github.com/11joselu/sass-graph.git",
+    "sass-graph": "git+https://github.com/11joselu/sass-graph.git",
     "through2": "3.0.1",
     "vinyl-fs": "3.0.3",
     "yargs": "13.2.2"
