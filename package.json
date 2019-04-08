@@ -5,7 +5,8 @@
   "main": "lib/index.js",
   "scripts": {
     "test": "mocha ./__tests__/**/*.js",
-    "coverage": "NODE_ENV=test && nyc --reporter=text-lcov npm test | coveralls"
+    "coverage": "NODE_ENV=test && nyc --reporter=text-lcov npm test | coveralls",
+    "coverage-html": "nyc --reporter=html --reporter=text npm test"
   },
   "repository": {
     "type": "git",
