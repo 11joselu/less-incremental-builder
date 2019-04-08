@@ -1,3 +1,6 @@
 node_modules/
 __tests__/build/*.less
 .vscode/
+
+coverage/
+.nyc_output/

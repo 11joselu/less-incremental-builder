@@ -5,6 +5,9 @@
   <p>Watch, loads a Less file and compiles it to CSS.</p>
 </div>
 
+[![Build Status](https://travis-ci.com/11joselu/less-incremental-builder.svg?branch=master)](https://travis-ci.com/11joselu/less-incremental-builder)
+[![Coverage Status](https://coveralls.io/repos/github/11joselu/less-incremental-builder/badge.svg?branch=master)](https://coveralls.io/github/11joselu/less-incremental-builder?branch=master)
+
 <h2 align="center">Install</h2>
 
 ```bash
@@ -14,7 +17,7 @@ npm install less-incremental-build --save-dev
 <h2 align="center">Usage</h2>
 
 ```bash
-node less-incremental-build --src <main_file>.less --output <out_put>.css
+node less-incremental-build --src <main_file>.less --output <output>.css
 ```
 
 <h2 align="center">Maintainers</h2>
@@ -28,6 +31,6 @@ node less-incremental-build --src <main_file>.less --output <out_put>.css
   <tr>
 </table>
 
-<h2 align="center">License</h2>
+<h2>License</h2>
 
 [MIT](LICENSE.md)
