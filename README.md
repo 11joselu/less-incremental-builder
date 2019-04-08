@@ -7,7 +7,6 @@
 
 [![Build Status](https://travis-ci.com/11joselu/less-incremental-builder.svg?branch=master)](https://travis-ci.com/11joselu/less-incremental-builder)
 [![Coverage Status](https://coveralls.io/repos/github/11joselu/less-incremental-builder/badge.svg?branch=master)](https://coveralls.io/github/11joselu/less-incremental-builder?branch=master)
-
 [![npm version](https://img.shields.io/npm/v/less-incremental-builder.svg)](https://www.npmjs.com/package/less-incremental-builder)
 
 <h2>Install</h2>
