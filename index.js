@@ -13,8 +13,11 @@ const {
   loadGraph
 } = require('./lib/graph/loader');
 const {
-  mkdirp
+  mkdirp,
 } = require('./lib/utils-functions');
+const {
+  validateArguments
+} = require('./lib/validator/paramsValidator');
 
 console.reset();
 
@@ -25,6 +28,8 @@ const hashPlugin = require('./lib/lessPlugin/hashPlugin')(hashMap, cwd);
 const mainFile = argv.src;
 const output = argv.output;
 
+validateArguments(argv);
+
 mkdirp(output);
 
 const lessCompiler = (content) => {
@@ -33,8 +38,6 @@ const lessCompiler = (content) => {
     plugins: [hashPlugin]
   })
 }
-
-const MaperContent = {};
 
 const mainGraph = loadGraph(mainFile);
 const watchingQueue = Object.keys(mainGraph.index);
@@ -134,17 +137,13 @@ const replaceContentInMainFile = (path, css) => {
 }
 
 const unwatchFile = (path) => {
-
-  replaceContentInMainFile(path, '');
-
-  delete MaperContent[path];
   const index = watchingQueue.findIndex(file => file === path);
+  replaceContentInMainFile(path, '');
 
   if (index !== -1) {
     watchingQueue.splice(index, 1);
     watcher.unwatch(path);
   }
-
 }
 
 const alreadyIsWatching = (path) => watchingQueue.includes(path);
@@ -203,7 +202,7 @@ watcher
   .on('add', (path) => {
     const isMain = isMainFile(path);
     if (isMain) {
-      compileLess(path, isMain, true);
+      compileLess(path, isMain);
     }
   })
   .on('change', path => {
