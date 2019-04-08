@@ -6,17 +6,13 @@ const argv = require('yargs').argv
 const path = require('path')
 
 const logger = require('./lib/logger');
-const {
-  loadGraph
-} = require('./lib/graph/loader');
+const loadGraph = require('./lib/graph/loader');
+const validateArguments = require('./lib/validator/paramsValidator');
+const Parser = require('./lib/compiler/Parser');
 const {
   mkdirp,
+  getPathsFromGraph,
 } = require('./lib/utils-functions');
-const {
-  validateArguments
-} = require('./lib/validator/paramsValidator');
-
-const Parser = require('./lib/compiler/Parser');
 
 const cwd = process.cwd();
 const mainFile = argv.src;
@@ -25,13 +21,8 @@ const output = argv.output;
 validateArguments(argv);
 mkdirp(output);
 
-const mainGraph = loadGraph(mainFile);
-const watchingQueue = Object.keys(mainGraph.index);
-const paths = mainGraph.foundedPaths.map(p => path.relative(cwd, p) + '/');
-
-if (!paths.length) {
-  paths.push(path, path.dirname(mainFile));
-}
+const graph = loadGraph(mainFile);
+const watchingQueue = Object.keys(graph.index);
 
 console.reset();
 
@@ -40,6 +31,7 @@ let isFirstBuildValid = false;
 
 const watcher = chokidar.watch(watchingQueue);
 
+const paths = getPathsFromGraph(graph, cwd, mainFile);
 const parser = new Parser(paths, cwd);
 
 const isMainFile = (filePath) => {
@@ -127,8 +119,8 @@ const replaceContentInMainFile = (path, css) => {
   }
 
   const re = new RegExp(`(\\/\\*${hash}\\*\\/)(.|\\n)*?\\/\\*${hash}\\*\\/`, "g");
-
   let currentContent = rootFile.contents.toString();
+
   currentContent = currentContent.replace(re, `$1\n${css}\n$1`);
   rootFile.contents = new Buffer(currentContent);
 }
@@ -143,23 +135,21 @@ const unwatchFile = (path) => {
   }
 }
 
-const alreadyIsWatching = (path) => watchingQueue.includes(path);
-
 const getImportStateFromPath = (path) => {
   const {
     imports = []
-  } = mainGraph.index[path] || {};
+  } = graph.index[path] || {};
   const pathGraph = loadGraph(path);
   const pathImports = pathGraph.index[path] || {};
   pathImports.imports = pathImports.imports || [];
   const newImports = pathImports.imports.filter(newImp => !imports.includes(newImp));
   const removedImports = imports.filter(imp => !pathImports.imports.includes(imp));
 
-  if (!(path in mainGraph.index)) {
-    mainGraph.index[path] = pathImports;
+  if (!(path in graph.index)) {
+    graph.index[path] = pathImports;
   }
 
-  mainGraph.index[path].imports = pathImports.imports;
+  graph.index[path].imports = pathImports.imports;
 
   return {
     newImports,
@@ -168,11 +158,11 @@ const getImportStateFromPath = (path) => {
 }
 
 const shouldBeUnWatched = (path, importedFrom) => {
-  if (!(path in mainGraph.index)) {
+  if (!(path in graph.index)) {
     return true;
   }
 
-  const pathGraph = mainGraph.index[path]
+  const pathGraph = graph.index[path]
   const {
     importedBy = []
   } = pathGraph;
@@ -185,13 +175,14 @@ const shouldBeUnWatched = (path, importedFrom) => {
 }
 
 const addNewFileToWatch = (path) => {
+  parser.pushNewPath(path.dirname(path));
   watchingQueue.push(path);
   watcher.add(path);
 };
 
 const addNewFilesToWatch = (paths = []) => {
   paths
-    .filter(p => !alreadyIsWatching(p))
+    .filter(p => !watchingQueue.includes(p))
     .forEach(addNewFileToWatch);
 }
 
