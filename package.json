@@ -1,6 +1,6 @@
 {
   "name": "less-incremental-builder",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Build less file with a incremental builder",
   "main": "lib/index.js",
   "scripts": {
@@ -10,7 +10,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/11joselu/less-incremental-build.git"
+    "url": "git://github.com/11joselu/less-incremental-builder.git"
   },
   "engines": {
     "node": ">=8.7.0",
@@ -27,14 +27,14 @@
   ],
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/11joselu/less-incremental-build/issues"
+    "url": "https://github.com/11joselu/less-incremental-builder/issues"
   },
   "husky": {
     "hooks": {
       "pre-commit": "npm test"
     }
   },
-  "homepage": "https://github.com/11joselu/less-incremental-build",
+  "homepage": "https://github.com/11joselu/less-incremental-builder",
   "dependencies": {
     "chai": "4.2.0",
     "chalk": "2.4.2",
