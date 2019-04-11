@@ -174,9 +174,9 @@ const shouldBeUnWatched = (path, importedFrom) => {
   return unwatchList.length !== 0;
 }
 
-const addNewFileToWatch = (path) => {
+const addNewFileToWatch = (newImport) => {
   parser.pushNewPath(path.dirname(path));
-  watchingQueue.push(path);
+  watchingQueue.push(newImport);
   watcher.add(path);
 };
 
