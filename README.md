@@ -21,6 +21,26 @@ npm install less-incremental-build --save-dev
 node less-incremental-build --src <main_file>.less --output <output>.css
 ```
 
+### With npx
+
+```bash
+npx less-incremental-build --src <main_file>.less --output <output>.css
+```
+
+## API
+
+#### src
+
+Type: `string`
+
+The main file to find all imports to watch (include himself).
+
+#### output
+
+Type: `string`
+
+Output file to compile less styles. Should be a css file (If not exists, it will be created)
+
 <h2>Maintainers</h2>
 
 <table>
