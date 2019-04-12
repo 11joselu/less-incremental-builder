@@ -29,7 +29,11 @@ let isFirstBuildValid = false;
 
 const watcher = chokidar.watch(wQueue.getQueue());
 
-const paths = utils.getPathsForLessPlugin(graph, cwd, fileManager.getInputFile());
+const paths = utils.getPathsForLessPlugin(
+  graph,
+  cwd,
+  fileManager.getInputFile()
+);
 const renderer = new Renderer(paths, cwd);
 
 var isCompiling = false;
@@ -40,70 +44,72 @@ const compileLess = (newFile, isMainFile = false) => {
   const stream = vfs.src(newFile);
 
   stream
-    .pipe(through(function (file, enc, done) {
-      if (isCompiling) {
-        return;
-      }
+    .pipe(
+      through(function(file, enc, done) {
+        if (isCompiling) {
+          return;
+        }
 
-      let str = file.contents.toString();
+        let str = file.contents.toString();
 
-      const {
-        removedImports,
-        newImports
-      } = getImportStateFromPath(file.path);
+        const { removedImports, newImports } = getImportStateFromPath(
+          file.path
+        );
 
-      if (newImports.length) {
-        addNewFilesToWatch(newImports);
-      }
+        if (newImports.length) {
+          addNewFilesToWatch(newImports);
+        }
 
-      if (removedImports.length) {
-        removedImports
-          .filter((f) => shouldBeUnWatched(f, file.path))
-          .forEach(unwatchFile);
-      }
+        if (removedImports.length) {
+          removedImports
+            .filter(f => shouldBeUnWatched(f, file.path))
+            .forEach(unwatchFile);
+        }
 
-      logger.logInfoBuild(newFile);
+        logger.logInfoBuild(newFile);
 
-      isCompiling = true;
-      renderer.render(str)
-        .then(function ({
-          css
-        }) {
-          let contents = css;
+        isCompiling = true;
+        renderer
+          .render(str)
+          .then(
+            function({ css }) {
+              let contents = css;
 
-          if (isMainFile) {
-            file.contents = new Buffer(contents);
-            fileManager.setRootFile(file);
-            isFirstBuildValid = true;
-          }
+              if (isMainFile) {
+                file.contents = new Buffer(contents);
+                fileManager.setRootFile(file);
+                isFirstBuildValid = true;
+              }
 
-          const isRootFileEmpty = fileManager.isRootFileEmpty();
+              const isRootFileEmpty = fileManager.isRootFileEmpty();
 
-          if (!isMainFile && !isRootFileEmpty) {
-            replaceContentInMainFile(newFile, contents);
-          }
+              if (!isMainFile && !isRootFileEmpty) {
+                replaceContentInMainFile(newFile, contents);
+              }
 
-          if (!isRootFileEmpty) {
-            this.push(fileManager.getBufferFromRootFile());
-          }
+              if (!isRootFileEmpty) {
+                this.push(fileManager.getBufferFromRootFile());
+              }
 
-          isCompiling = false;
+              isCompiling = false;
 
-          if (!isFirstBuildValid) {
-            compileLess(fileManager.getInputFile(), true);
-          }
+              if (!isFirstBuildValid) {
+                compileLess(fileManager.getInputFile(), true);
+              }
 
-          done();
-        }.bind(this))
-        .catch((err) => {
-          if (isMainFile) {
-            isFirstBuildValid = false;
-          }
+              done();
+            }.bind(this)
+          )
+          .catch(err => {
+            if (isMainFile) {
+              isFirstBuildValid = false;
+            }
 
-          isCompiling = false;
-          logger.logErrorBuild(err);
-        });
-    }))
+            isCompiling = false;
+            logger.logErrorBuild(err);
+          });
+      })
+    )
     .pipe(fs.createWriteStream(fileManager.getOutputFile()))
     .on('finish', () => {
       logger.logSuccessBuild();
@@ -120,7 +126,7 @@ const replaceContentInMainFile = (filePath, css) => {
   fileManager.replaceContentInRootFileByHash(hash, css);
 };
 
-const unwatchFile = (filePath) => {
+const unwatchFile = filePath => {
   const index = wQueue.findIndexPath(filePath);
   replaceContentInMainFile(filePath, '');
 
@@ -130,16 +136,16 @@ const unwatchFile = (filePath) => {
   }
 };
 
-const getImportStateFromPath = (filePath) => {
-  const {
-    imports = []
-  } = graph.index[filePath] || {};
+const getImportStateFromPath = filePath => {
+  const { imports = [] } = graph.index[filePath] || {};
   let newImports = [];
   let removedImports = [];
   try {
     const pathGraph = loadGraph(filePath);
     const pathImports = pathGraph.index[filePath];
-    newImports = pathImports.imports.filter(newImp => !imports.includes(newImp));
+    newImports = pathImports.imports.filter(
+      newImp => !imports.includes(newImp)
+    );
     removedImports = imports.filter(imp => !pathImports.imports.includes(imp));
 
     if (!(filePath in graph.index)) {
@@ -148,7 +154,9 @@ const getImportStateFromPath = (filePath) => {
 
     graph.index[filePath].imports = pathImports.imports;
   } catch (e) {
-    logger.warnInfo(`Somthing went wrong with ${filePath}, so make some changes`);
+    logger.warnInfo(
+      `Somthing went wrong with ${filePath}, so make some changes`
+    );
   }
 
   return {
@@ -163,31 +171,26 @@ const shouldBeUnWatched = (filePath, importedFrom) => {
   }
 
   const pathGraph = graph.index[filePath];
-  const {
-    importedBy = []
-  } = pathGraph;
-  const unwatchList = importedBy
-    .filter(by => by !== importedFrom);
+  const { importedBy = [] } = pathGraph;
+  const unwatchList = importedBy.filter(by => by !== importedFrom);
 
   pathGraph.importedBy = unwatchList;
 
   return unwatchList.length !== 0;
 };
 
-const addNewFileToWatch = (newImport) => {
+const addNewFileToWatch = newImport => {
   renderer.pushNewPath(path.dirname(newImport));
   wQueue.addToWatch(newImport);
   watcher.add(newImport);
 };
 
 const addNewFilesToWatch = (paths = []) => {
-  paths
-    .filter(p => !wQueue.isWatched(p))
-    .forEach(addNewFileToWatch);
+  paths.filter(p => !wQueue.isWatched(p)).forEach(addNewFileToWatch);
 };
 
 watcher
-  .on('add', (filePath) => {
+  .on('add', filePath => {
     const isMain = fileManager.isMainFile(filePath);
     if (isMain) {
       compileLess(filePath, isMain);

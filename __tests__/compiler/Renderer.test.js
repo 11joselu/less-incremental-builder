@@ -10,20 +10,26 @@ describe('Test Renderer', () => {
   });
 
   it('Should create a correct instance', () => {
-    expect(renderer).to.be.an('object').to.have.own.property('cwd', process.cwd()).that.is.a('string');
-    expect(renderer).to.be.an('object').to.have.own.property('paths').that.is.a('array');
+    expect(renderer)
+      .to.be.an('object')
+      .to.have.own.property('cwd', process.cwd())
+      .that.is.a('string');
+    expect(renderer)
+      .to.be.an('object')
+      .to.have.own.property('paths')
+      .that.is.a('array');
     expect(renderer.map).to.be.an.instanceOf(Map);
     expect(renderer.getLessPlugin()).to.be.an('array').that.is.not.empty;
-    expect(renderer.getLessPlugin()[0]).to.have.own.property('install').that.is.a('function');
+    expect(renderer.getLessPlugin()[0])
+      .to.have.own.property('install')
+      .that.is.a('function');
   });
 
   it('Should render styles', () => {
     const toBuild = '';
     const resultPromise = renderer.render(toBuild);
     expect(resultPromise).to.be.a('promise');
-    resultPromise.then(({
-      css
-    }) => {
+    resultPromise.then(({ css }) => {
       expect(css).to.equal(toBuild);
     });
   });
@@ -39,5 +45,4 @@ describe('Test Renderer', () => {
   it('Should get empty key inside map', () => {
     expect(renderer.getFileHash('')).to.be.a('undefined');
   });
-
 });

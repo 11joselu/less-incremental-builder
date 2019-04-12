@@ -1,15 +1,13 @@
 const expect = require('chai').expect;
 const Hasher = require('../../lib/lessPlugin/Hasher');
-const {
-  hash
-} = require('../../lib/utils-functions');
+const { hash } = require('../../lib/utils-functions');
 const path = require('path');
 
 const filename = 'tested.less';
 const extra = {
   fileInfo: {
     filename,
-  }
+  },
 };
 
 const styles = 'body{color: red;}';
@@ -22,11 +20,17 @@ describe('Test Hasher plugin', () => {
   });
 
   it('Should create a valid instance', () => {
-    expect(hasher).to.be.an('object').to.have.own.property('cwd', process.cwd()).that.is.a('string');
-    expect(hasher).to.be.an('object').to.have.own.property('map').to.be.an.instanceOf(Map);
+    expect(hasher)
+      .to.be.an('object')
+      .to.have.own.property('cwd', process.cwd())
+      .that.is.a('string');
+    expect(hasher)
+      .to.be.an('object')
+      .to.have.own.property('map')
+      .to.be.an.instanceOf(Map);
   });
 
-  it('Should Hasher contains \'process\' function', () => {
+  it("Should Hasher contains 'process' function", () => {
     expect(hasher.process).to.not.throw();
   });
 

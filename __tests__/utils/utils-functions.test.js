@@ -5,9 +5,7 @@ const path = require('path');
 const loadGraph = require('../../lib/graph/loader');
 const DirectoryAlreadyExistsException = require('../../lib/exceptions/DirectoryAlreadyExistsException');
 
-const {
-  createLessFile
-} = require('../test-functions');
+const { createLessFile } = require('../test-functions');
 
 const dir = path.resolve(process.cwd(), '__tests__', 'build', 'test');
 
@@ -33,9 +31,15 @@ describe('Test utils functions', () => {
   it('Should create paths for less plugin', () => {
     const file = createLessFile();
     const graph = loadGraph(file.path);
-    const paths = utils.getPathsForLessPlugin(graph, process.cwd(), 'tested.less');
+    const paths = utils.getPathsForLessPlugin(
+      graph,
+      process.cwd(),
+      'tested.less'
+    );
 
-    expect(paths).to.be.an('array').that.include('__tests__/build/');
+    expect(paths)
+      .to.be.an('array')
+      .that.include('__tests__/build/');
 
     fs.unlinkSync(file.path);
   });
@@ -43,5 +47,4 @@ describe('Test utils functions', () => {
   after(() => {
     fs.rmdirSync(path.dirname(path.join(dir, 'test')));
   });
-
 });

@@ -1,12 +1,6 @@
 const expect = require('chai').expect;
-const {
-  unlinkSync,
-  existsSync,
-} = require('fs');
-const {
-  createLessFile,
-  createStream
-} = require('../test-functions');
+const { unlinkSync, existsSync } = require('fs');
+const { createLessFile, createStream } = require('../test-functions');
 const through = require('through2').obj;
 const RequiredParamException = require('../../lib/exceptions/RequiredParamException');
 const FileManager = require('../../lib/compiler/FileManager');
@@ -34,10 +28,22 @@ describe('Test FileManager', () => {
 
   it('Should create a correct instance', () => {
     expect(manager).to.be.an.instanceOf(FileManager);
-    expect(manager).to.be.an('object').to.have.own.property('inputFile', inputFile).that.is.a('string');
-    expect(manager).to.be.an('object').to.have.own.property('outputFile', outputFile).that.is.a('string');
-    expect(manager).to.be.an('object').to.have.own.property('cwd', cwd).that.is.a('string');
-    expect(manager).to.be.an('object').to.have.own.property('rootFile').that.is.a('null');
+    expect(manager)
+      .to.be.an('object')
+      .to.have.own.property('inputFile', inputFile)
+      .that.is.a('string');
+    expect(manager)
+      .to.be.an('object')
+      .to.have.own.property('outputFile', outputFile)
+      .that.is.a('string');
+    expect(manager)
+      .to.be.an('object')
+      .to.have.own.property('cwd', cwd)
+      .that.is.a('string');
+    expect(manager)
+      .to.be.an('object')
+      .to.have.own.property('rootFile')
+      .that.is.a('null');
   });
 
   it('Should validate main file', () => {
@@ -56,58 +62,68 @@ describe('Test FileManager', () => {
       stream = createStream(manager.getInputFile());
     });
 
-    it('Should set correct rootFile', (ended) => {
+    it('Should set correct rootFile', ended => {
       stream
-        .pipe(through(function (file, enc, done) {
-          expect(manager.isRootFileEmpty()).to.be.true;
-          manager.setRootFile(file);
-          done();
-        }))
+        .pipe(
+          through(function(file, enc, done) {
+            expect(manager.isRootFileEmpty()).to.be.true;
+            manager.setRootFile(file);
+            done();
+          })
+        )
         .on('finish', () => {
           expect(manager.isRootFileEmpty()).to.be.false;
           ended();
         });
     });
 
-    it('Should get content as a string from rootFile', (ended) => {
+    it('Should get content as a string from rootFile', ended => {
       let currentFile = null;
       stream
-        .pipe(through(function (file, enc, done) {
-          manager.setRootFile(file);
-          currentFile = file;
-          done();
-        }))
+        .pipe(
+          through(function(file, enc, done) {
+            manager.setRootFile(file);
+            currentFile = file;
+            done();
+          })
+        )
         .on('finish', () => {
-          expect(manager.getRootFileContentString()).to.have.string(currentFile.contents.toString());
+          expect(manager.getRootFileContentString()).to.have.string(
+            currentFile.contents.toString()
+          );
           ended();
         });
     });
 
-    it('Should get content as a buffer object from rootFile', (ended) => {
+    it('Should get content as a buffer object from rootFile', ended => {
       let currentFile = null;
 
       stream
-        .pipe(through(function (file, enc, done) {
-          currentFile = file;
-          manager.setRootFile(file);
-          done();
-        }))
+        .pipe(
+          through(function(file, enc, done) {
+            currentFile = file;
+            manager.setRootFile(file);
+            done();
+          })
+        )
         .on('finish', () => {
           expect(manager.getBufferFromRootFile()).to.eql(currentFile.contents);
           ended();
         });
     });
 
-    it('Should override content inside rootFile', (ended) => {
+    it('Should override content inside rootFile', ended => {
       let newContent = 'tested';
       let contentBuffer = new Buffer(newContent);
 
       stream
-        .pipe(through(function (file, enc, done) {
-          manager.setRootFile(file);
-          manager.overrideRootBufferContent(newContent);
-          done();
-        }))
+        .pipe(
+          through(function(file, enc, done) {
+            manager.setRootFile(file);
+            manager.overrideRootBufferContent(newContent);
+            done();
+          })
+        )
         .on('finish', () => {
           expect(manager.getBufferFromRootFile()).to.eql(contentBuffer);
           expect(manager.getRootFileContentString()).to.have.string(newContent);
@@ -142,12 +158,14 @@ describe('Test FileManager', () => {
       stream = createStream(manager.getInputFile());
     });
 
-    it('Should replace new content by hash', (ended) => {
+    it('Should replace new content by hash', ended => {
       stream
-        .pipe(through(function (file, enc, done) {
-          manager.setRootFile(file);
-          done();
-        }))
+        .pipe(
+          through(function(file, enc, done) {
+            manager.setRootFile(file);
+            done();
+          })
+        )
         .on('finish', () => {
           const newContent = '.tested{color: tomato;}';
           manager.replaceContentInRootFileByHash(hash, newContent);
@@ -156,12 +174,14 @@ describe('Test FileManager', () => {
         });
     });
 
-    it('Should replace new content by hash', (ended) => {
+    it('Should replace new content by hash', ended => {
       stream
-        .pipe(through(function (file, enc, done) {
-          manager.setRootFile(file);
-          done();
-        }))
+        .pipe(
+          through(function(file, enc, done) {
+            manager.setRootFile(file);
+            done();
+          })
+        )
         .on('finish', () => {
           hash = '';
           manager.replaceContentInRootFileByHash(hash, '');
@@ -175,7 +195,5 @@ describe('Test FileManager', () => {
         unlinkSync(manager.getInputFile());
       }
     });
-
   });
-
 });
