@@ -6,7 +6,7 @@ const createFakeContent = (hash) => {
   return (`
     @import "${hash}";
   `);
-}
+};
 
 exports.createLessFile = (content) => {
   const now = Date.now();
@@ -22,9 +22,9 @@ exports.createLessFile = (content) => {
     path: filePath,
     hash: now,
     content,
-  }
-}
+  };
+};
 
 exports.createStream = (filePath) => {
   return vfs.src(filePath);
-}
+};

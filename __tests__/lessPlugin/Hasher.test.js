@@ -45,7 +45,7 @@ describe('Test Hasher plugin', () => {
     const hashed = hasher.hashFile(_file);
     const comment = hasher.toLessComment(hashed);
     let expected = comment;
-    expected += "\n" + styles + "\n";
+    expected += '\n' + styles + '\n';
     expected += comment;
 
     hasher.process(styles, extra);

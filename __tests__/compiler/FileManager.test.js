@@ -23,7 +23,7 @@ describe('Test FileManager', () => {
     file = createLessFile();
     inputFile = file.path;
     cwd = process.cwd();
-    manager = new FileManager(inputFile, outputFile, cwd)
+    manager = new FileManager(inputFile, outputFile, cwd);
   });
 
   it('Should create a throw Error', () => {
@@ -145,7 +145,6 @@ describe('Test FileManager', () => {
     it('Should replace new content by hash', (ended) => {
       stream
         .pipe(through(function (file, enc, done) {
-          currentFile = file;
           manager.setRootFile(file);
           done();
         }))
@@ -160,7 +159,6 @@ describe('Test FileManager', () => {
     it('Should replace new content by hash', (ended) => {
       stream
         .pipe(through(function (file, enc, done) {
-          currentFile = file;
           manager.setRootFile(file);
           done();
         }))

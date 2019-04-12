@@ -2,8 +2,8 @@ const chokidar = require('chokidar');
 const vfs = require('vinyl-fs');
 const fs = require('fs');
 const through = require('through2').obj;
-const argv = require('yargs').argv
-const path = require('path')
+const argv = require('yargs').argv;
+const path = require('path');
 
 const logger = require('./lib/logger');
 const loadGraph = require('./lib/graph/loader');
@@ -108,7 +108,7 @@ const compileLess = (newFile, isMainFile = false) => {
     .on('finish', () => {
       logger.logSuccessBuild();
     });
-}
+};
 
 const replaceContentInMainFile = (filePath, css) => {
   const hash = renderer.getFileHash(filePath);
@@ -118,7 +118,7 @@ const replaceContentInMainFile = (filePath, css) => {
   }
 
   fileManager.replaceContentInRootFileByHash(hash, css);
-}
+};
 
 const unwatchFile = (filePath) => {
   const index = wQueue.findIndexPath(filePath);
@@ -128,7 +128,7 @@ const unwatchFile = (filePath) => {
     wQueue.remove(index);
     watcher.unwatch(filePath);
   }
-}
+};
 
 const getImportStateFromPath = (filePath) => {
   const {
@@ -155,14 +155,14 @@ const getImportStateFromPath = (filePath) => {
     newImports,
     removedImports,
   };
-}
+};
 
 const shouldBeUnWatched = (filePath, importedFrom) => {
   if (!(filePath in graph.index)) {
     return true;
   }
 
-  const pathGraph = graph.index[filePath]
+  const pathGraph = graph.index[filePath];
   const {
     importedBy = []
   } = pathGraph;
@@ -172,7 +172,7 @@ const shouldBeUnWatched = (filePath, importedFrom) => {
   pathGraph.importedBy = unwatchList;
 
   return unwatchList.length !== 0;
-}
+};
 
 const addNewFileToWatch = (newImport) => {
   renderer.pushNewPath(path.dirname(newImport));
@@ -184,7 +184,7 @@ const addNewFilesToWatch = (paths = []) => {
   paths
     .filter(p => !wQueue.isWatched(p))
     .forEach(addNewFileToWatch);
-}
+};
 
 watcher
   .on('add', (filePath) => {
@@ -194,7 +194,7 @@ watcher
     }
   })
   .on('change', filePath => {
-    compileLess(filePath, fileManager.isMainFile(filePath))
+    compileLess(filePath, fileManager.isMainFile(filePath));
   })
   .on('unlink', filePath => {
     unwatchFile(filePath);

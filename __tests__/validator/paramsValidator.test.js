@@ -16,7 +16,7 @@ describe('Validate app arguments', () => {
 
   it('Should throw an exception when output param is not a css file', () => {
     expect(() => {
-      validateParams('test.less', 'is_a_dir/')
+      validateParams('test.less', 'is_a_dir/');
     }).to.throw(NotValidOutputFileException);
   });
 
