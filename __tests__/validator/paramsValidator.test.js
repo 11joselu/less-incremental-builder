@@ -10,25 +10,17 @@ describe('Validate app arguments', () => {
 
   it('Should throw an exception when output param is empty', () => {
     expect(() => {
-      validateParams({
-        src: 'test.less'
-      });
+      validateParams('test.less');
     }).to.throw(RequiredParamException);
   });
 
   it('Should throw an exception when output param is not a css file', () => {
     expect(() => {
-      validateParams({
-        src: 'test.less',
-        output: 'is_a_dir/'
-      })
+      validateParams('test.less', 'is_a_dir/')
     }).to.throw(NotValidOutputFileException);
   });
 
   it('Should pass validation', () => {
-    expect(validateParams({
-      src: 'test.less',
-      output: 'style.css'
-    })).to.be.an('undefined');
+    expect(validateParams('test.less', 'style.css')).to.be.true;
   });
 });

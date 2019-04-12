@@ -7,44 +7,45 @@ const path = require('path')
 
 const logger = require('./lib/logger');
 const loadGraph = require('./lib/graph/loader');
-const validateArguments = require('./lib/validator/paramsValidator');
-const Parser = require('./lib/compiler/Parser');
+const Renderer = require('./lib/compiler/Renderer');
+const FileManager = require('./lib/compiler/FileManager');
+const WatcherQueue = require('./lib/Watcher/WatcherQueue');
+
 const {
   mkdirp,
   getPathsFromGraph,
 } = require('./lib/utils-functions');
 
 const cwd = process.cwd();
-const mainFile = argv.src;
-const output = argv.output;
 
-validateArguments(argv);
-mkdirp(output);
+const fileManager = new FileManager(argv.src, argv.output, cwd);
+mkdirp(fileManager.getOutputFile());
 
-const graph = loadGraph(mainFile);
-const watchingQueue = Object.keys(graph.index);
+const graph = loadGraph(fileManager.getInputFile());
+const wQueue = new WatcherQueue(Object.keys(graph.index));
 
 console.reset();
 
-let rootFile = null;
 let isFirstBuildValid = false;
 
-const watcher = chokidar.watch(watchingQueue);
+const watcher = chokidar.watch(wQueue.getQueue());
 
-const paths = getPathsFromGraph(graph, cwd, mainFile);
-const parser = new Parser(paths, cwd);
+const paths = getPathsFromGraph(graph, cwd, fileManager.getInputFile());
+const renderer = new Renderer(paths, cwd);
 
-const isMainFile = (filePath) => {
-  return mainFile === path.relative(cwd, filePath);
-}
+var isCompiling = false;
 
-const compileLess = (path, isMainFile = false) => {
+const compileLess = (newFile, isMainFile = false) => {
   console.reset();
 
-  const stream = vfs.src(path);
+  const stream = vfs.src(newFile);
 
   stream
     .pipe(through(function (file, enc, done) {
+      if (isCompiling) {
+        return;
+      }
+
       let str = file.contents.toString();
 
       const {
@@ -62,16 +63,10 @@ const compileLess = (path, isMainFile = false) => {
           .forEach(unwatchFile);
       }
 
-      if (!isMainFile) {
-        // TODO: Change this line by resolving variables/mixins paths. May cause a performance issue in larges projects
-        const importantFiles = watchingQueue.map((path) => `@import (reference) '${path}'`);
-        const joined = importantFiles.join(';\n');
-        str = joined + ';' + str;
-      }
+      logger.logInfoBuild(newFile);
 
-      logger.logInfoBuild(path);
-
-      parser.render(str)
+      isCompiling = true;
+      renderer.render(str)
         .then(function ({
           css
         }) {
@@ -79,20 +74,24 @@ const compileLess = (path, isMainFile = false) => {
 
           if (isMainFile) {
             file.contents = new Buffer(contents);
-            rootFile = file;
+            fileManager.setRootFile(file);
             isFirstBuildValid = true;
           }
 
-          if (!isMainFile && rootFile) {
-            replaceContentInMainFile(path, contents);
+          const isRootFileEmpty = fileManager.isRootFileEmpty();
+
+          if (!isMainFile && !isRootFileEmpty) {
+            replaceContentInMainFile(newFile, contents);
           }
 
-          if (rootFile) {
-            this.push(rootFile.contents);
+          if (!isRootFileEmpty) {
+            this.push(fileManager.getBufferFromRootFile());
           }
+
+          isCompiling = false;
 
           if (!isFirstBuildValid) {
-            compileLess(mainFile, true);
+            compileLess(fileManager.getInputFile(), true);
           }
 
           done();
@@ -102,54 +101,57 @@ const compileLess = (path, isMainFile = false) => {
             isFirstBuildValid = false;
           }
 
+          isCompiling = false;
           logger.logErrorBuild(err);
         });
     }))
-    .pipe(fs.createWriteStream(output))
+    .pipe(fs.createWriteStream(fileManager.getOutputFile()))
     .on('finish', () => {
       logger.logSuccessBuild();
     });
 }
 
-const replaceContentInMainFile = (path, css) => {
-  const hash = parser.getFileHash(path);
+const replaceContentInMainFile = (filePath, css) => {
+  const hash = renderer.getFileHash(filePath);
 
   if (!hash) {
     return;
   }
 
-  const re = new RegExp(`(\\/\\*${hash}\\*\\/)(.|\\n)*?\\/\\*${hash}\\*\\/`, "g");
-  let currentContent = rootFile.contents.toString();
-
-  currentContent = currentContent.replace(re, `$1\n${css}\n$1`);
-  rootFile.contents = new Buffer(currentContent);
+  fileManager.replaceContentInRootFileByHash(hash, css);
 }
 
-const unwatchFile = (path) => {
-  const index = watchingQueue.findIndex(file => file === path);
-  replaceContentInMainFile(path, '');
+const unwatchFile = (filePath) => {
+  const index = wQueue.findIndexPath(filePath);
+  replaceContentInMainFile(filePath, '');
 
   if (index !== -1) {
-    watchingQueue.splice(index, 1);
-    watcher.unwatch(path);
+    wQueue.remove(index);
+    watcher.unwatch(filePath);
   }
 }
 
-const getImportStateFromPath = (path) => {
+const getImportStateFromPath = (filePath) => {
   const {
     imports = []
-  } = graph.index[path] || {};
-  const pathGraph = loadGraph(path);
-  const pathImports = pathGraph.index[path] || {};
-  pathImports.imports = pathImports.imports || [];
-  const newImports = pathImports.imports.filter(newImp => !imports.includes(newImp));
-  const removedImports = imports.filter(imp => !pathImports.imports.includes(imp));
+  } = graph.index[filePath] || {};
+  let newImports = [];
+  let removedImports = [];
+  try {
+    const pathGraph = loadGraph(filePath);
+    const pathImports = pathGraph.index[filePath] || {};
+    pathImports.imports = pathImports.imports || [];
+    newImports = pathImports.imports.filter(newImp => !imports.includes(newImp));
+    removedImports = imports.filter(imp => !pathImports.imports.includes(imp));
 
-  if (!(path in graph.index)) {
-    graph.index[path] = pathImports;
+    if (!(filePath in graph.index)) {
+      graph.index[filePath] = pathImports;
+    }
+
+    graph.index[filePath].imports = pathImports.imports;
+  } catch (e) {
+    logger.warnInfo(`Somthing went wrong with ${filePath}, so make some changes`);
   }
-
-  graph.index[path].imports = pathImports.imports;
 
   return {
     newImports,
@@ -157,12 +159,12 @@ const getImportStateFromPath = (path) => {
   };
 }
 
-const shouldBeUnWatched = (path, importedFrom) => {
-  if (!(path in graph.index)) {
+const shouldBeUnWatched = (filePath, importedFrom) => {
+  if (!(filePath in graph.index)) {
     return true;
   }
 
-  const pathGraph = graph.index[path]
+  const pathGraph = graph.index[filePath]
   const {
     importedBy = []
   } = pathGraph;
@@ -175,27 +177,27 @@ const shouldBeUnWatched = (path, importedFrom) => {
 }
 
 const addNewFileToWatch = (newImport) => {
-  parser.pushNewPath(path.dirname(path));
-  watchingQueue.push(newImport);
-  watcher.add(path);
+  renderer.pushNewPath(path.dirname(newImport));
+  wQueue.addToWatch(newImport);
+  watcher.add(newImport);
 };
 
 const addNewFilesToWatch = (paths = []) => {
   paths
-    .filter(p => !watchingQueue.includes(p))
+    .filter(p => !wQueue.isWatched(p))
     .forEach(addNewFileToWatch);
 }
 
 watcher
-  .on('add', (path) => {
-    const isMain = isMainFile(path);
+  .on('add', (filePath) => {
+    const isMain = fileManager.isMainFile(filePath);
     if (isMain) {
-      compileLess(path, isMain);
+      compileLess(filePath, isMain);
     }
   })
-  .on('change', path => {
-    compileLess(path, isMainFile(path))
+  .on('change', filePath => {
+    compileLess(filePath, fileManager.isMainFile(filePath))
   })
-  .on('unlink', path => {
-    unwatchFile(path);
+  .on('unlink', filePath => {
+    unwatchFile(filePath);
   });

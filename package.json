@@ -1,6 +1,6 @@
 {
   "name": "less-incremental-builder",
-  "version": "1.1.1",
+  "version": "1.1.5",
   "description": "Build less file with a incremental builder",
   "main": "lib/index.js",
   "scripts": {
@@ -16,7 +16,7 @@
     "node": ">=8.7.0",
     "npm": ">=5.4.2"
   },
-  "author": "Jose Cabrera <joselu11cabrera@gmail.com>",
+  "author": "Jose Cabrera <joselu11cabrera@gmail.com>, Habitissimo",
   "keywords": [
     "less",
     "incremental",
