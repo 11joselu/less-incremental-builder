@@ -11,15 +11,14 @@ const Renderer = require('./lib/compiler/Renderer');
 const FileManager = require('./lib/compiler/FileManager');
 const WatcherQueue = require('./lib/Watcher/WatcherQueue');
 
-const {
-  mkdirp,
-  getPathsFromGraph,
-} = require('./lib/utils-functions');
-
+const utils = require('./lib/utils-functions');
 const cwd = process.cwd();
 
 const fileManager = new FileManager(argv.src, argv.output, cwd);
-mkdirp(fileManager.getOutputFile());
+
+if (!utils.existsDirectory(fileManager.getOutputDir())) {
+  utils.mkdirp(fileManager.getOutputDir());
+}
 
 const graph = loadGraph(fileManager.getInputFile());
 const wQueue = new WatcherQueue(Object.keys(graph.index));
@@ -30,7 +29,7 @@ let isFirstBuildValid = false;
 
 const watcher = chokidar.watch(wQueue.getQueue());
 
-const paths = getPathsFromGraph(graph, cwd, fileManager.getInputFile());
+const paths = utils.getPathsForLessPlugin(graph, cwd, fileManager.getInputFile());
 const renderer = new Renderer(paths, cwd);
 
 var isCompiling = false;
@@ -139,8 +138,7 @@ const getImportStateFromPath = (filePath) => {
   let removedImports = [];
   try {
     const pathGraph = loadGraph(filePath);
-    const pathImports = pathGraph.index[filePath] || {};
-    pathImports.imports = pathImports.imports || [];
+    const pathImports = pathGraph.index[filePath];
     newImports = pathImports.imports.filter(newImp => !imports.includes(newImp));
     removedImports = imports.filter(imp => !pathImports.imports.includes(imp));
 

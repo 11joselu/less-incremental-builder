@@ -1,7 +1,6 @@
 const fs = require('fs');
-const {
-  resolve
-} = require('path');
+const path = require('path');
+const vfs = require('vinyl-fs');
 
 const createFakeContent = (hash) => {
   return (`
@@ -9,20 +8,23 @@ const createFakeContent = (hash) => {
   `);
 }
 
-exports.createLessFile = () => {
+exports.createLessFile = (content) => {
   const now = Date.now();
   const filename = `${now}.less`;
-  const path = resolve('__tests__', 'build', filename);
-  const content = createFakeContent(now);
-
-  fs.writeFileSync(path, content, {
+  const filePath = path.resolve('__tests__', 'build', filename);
+  content = content || createFakeContent(now);
+  fs.writeFileSync(filePath, content, {
     flag: 'w'
   });
 
   return {
     filename,
-    path,
+    path: filePath,
     hash: now,
     content,
   }
+}
+
+exports.createStream = (filePath) => {
+  return vfs.src(filePath);
 }

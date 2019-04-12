@@ -1,7 +1,5 @@
-const {
-  assert,
-  expect
-} = require('chai');
+const expect = require('chai').expect;
+
 const Renderer = require('../../lib/compiler/Renderer');
 
 describe('Test Renderer', () => {
@@ -26,7 +24,7 @@ describe('Test Renderer', () => {
     resultPromise.then(({
       css
     }) => {
-      assert.equal(css, toBuild);
+      expect(css).to.equal(toBuild);
     });
   });
 
