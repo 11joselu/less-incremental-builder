@@ -6,37 +6,32 @@ const argv = require('yargs').argv;
 const path = require('path');
 
 const logger = require('./lib/logger');
-const createGraph = require('./lib/graph/create');
+const GraphStructure = require('./lib/graph/GraphStructure');
 const Renderer = require('./lib/compiler/Renderer');
 const FileManager = require('./lib/compiler/FileManager');
 const WatcherQueue = require('./lib/Watcher/WatcherQueue');
-
 const utils = require('./lib/utils-functions');
+const validateArguments = require('./lib/validator/paramsValidator');
+
 const cwd = process.cwd();
 
-const fileManager = new FileManager(argv.src, argv.output, cwd);
+validateArguments(argv.src, argv.output);
 
-if (!utils.existsDirectory(fileManager.getOutputDir())) {
-  utils.mkdirp(fileManager.getOutputDir());
+const manager = new FileManager(argv.src, argv.output, cwd);
+
+if (!utils.existsDirectory(manager.getOutputDir())) {
+  utils.mkdirp(manager.getOutputDir());
 }
 
-const graph = createGraph(fileManager.getInputFile());
-const wQueue = new WatcherQueue(Object.keys(graph.index));
+const graph = new GraphStructure(manager);
+const renderer = new Renderer(manager, graph.getFoundedPaths());
+const wQueue = new WatcherQueue(graph.getFiles());
 
 console.reset();
 
 let isFirstBuildValid = false;
-
+let isCompiling = false;
 const watcher = chokidar.watch(wQueue.getQueue());
-
-const paths = utils.getPathsForLessPlugin(
-  graph,
-  cwd,
-  fileManager.getInputFile()
-);
-const renderer = new Renderer(paths, cwd);
-
-var isCompiling = false;
 
 const compileLess = (newFile, isMainFile = false) => {
   console.reset();
@@ -52,7 +47,7 @@ const compileLess = (newFile, isMainFile = false) => {
 
         let str = file.contents.toString();
 
-        const { removedImports, newImports } = getImportStateFromPath(
+        const { removedImports, newImports } = graph.getImportStateFromFile(
           file.path
         );
 
@@ -62,7 +57,7 @@ const compileLess = (newFile, isMainFile = false) => {
 
         if (removedImports.length) {
           removedImports
-            .filter(f => shouldBeUnWatched(f, file.path))
+            .filter(graph.shouldBeUnWatched.bind(graph))
             .forEach(unwatchFile);
         }
 
@@ -77,24 +72,24 @@ const compileLess = (newFile, isMainFile = false) => {
 
               if (isMainFile) {
                 file.contents = new Buffer(contents);
-                fileManager.setRootFile(file);
+                manager.setRootFile(file);
                 isFirstBuildValid = true;
               }
 
-              const isRootFileEmpty = fileManager.isRootFileEmpty();
+              const isRootFileEmpty = manager.isRootFileEmpty();
 
               if (!isMainFile && !isRootFileEmpty) {
-                replaceContentInMainFile(newFile, contents);
+                manager.replaceContentInMainFile(newFile, contents);
               }
 
               if (!isRootFileEmpty) {
-                this.push(fileManager.getBufferFromRootFile());
+                this.push(manager.getBufferFromRootFile());
               }
 
               isCompiling = false;
 
               if (!isFirstBuildValid) {
-                compileLess(fileManager.getInputFile(), true);
+                compileLess(manager.getInputFile(), true);
               }
 
               done();
@@ -110,25 +105,15 @@ const compileLess = (newFile, isMainFile = false) => {
           });
       })
     )
-    .pipe(fs.createWriteStream(fileManager.getOutputFile()))
+    .pipe(fs.createWriteStream(manager.getOutputFile()))
     .on('finish', () => {
       logger.logSuccessBuild();
     });
 };
 
-const replaceContentInMainFile = (filePath, css) => {
-  const hash = renderer.getFileHash(filePath);
-
-  if (!hash) {
-    return;
-  }
-
-  fileManager.replaceContentInRootFileByHash(hash, css);
-};
-
 const unwatchFile = filePath => {
   const index = wQueue.findIndexPath(filePath);
-  replaceContentInMainFile(filePath, '');
+  manager.replaceContentInMainFile(filePath, '');
 
   if (index !== -1) {
     wQueue.remove(index);
@@ -136,47 +121,8 @@ const unwatchFile = filePath => {
   }
 };
 
-const getImportStateFromPath = filePath => {
-  const { imports = [] } = graph.index[filePath] || {};
-  let newImports = [];
-  let removedImports = [];
-  try {
-    const pathGraph = createGraph(filePath);
-    const pathImports = pathGraph.index[filePath];
-    newImports = pathImports.imports.filter(
-      newImp => !imports.includes(newImp)
-    );
-    removedImports = imports.filter(imp => !pathImports.imports.includes(imp));
-
-    if (!(filePath in graph.index)) {
-      graph.index[filePath] = pathImports;
-    }
-
-    graph.index[filePath].imports = pathImports.imports;
-  } catch (e) {
-    logger.warnInfo(
-      `Somthing went wrong with ${filePath}, so make some changes`
-    );
-  }
-
-  return {
-    newImports,
-    removedImports,
-  };
-};
-
-const shouldBeUnWatched = (filePath, importedFrom) => {
-  if (!(filePath in graph.index)) {
-    return true;
-  }
-
-  const pathGraph = graph.index[filePath];
-  const { importedBy = [] } = pathGraph;
-  const unwatchList = importedBy.filter(by => by !== importedFrom);
-
-  pathGraph.importedBy = unwatchList;
-
-  return unwatchList.length !== 0;
+const addNewFilesToWatch = (paths = []) => {
+  paths.filter(p => !wQueue.isWatched(p)).forEach(addNewFileToWatch);
 };
 
 const addNewFileToWatch = newImport => {
@@ -185,20 +131,18 @@ const addNewFileToWatch = newImport => {
   watcher.add(newImport);
 };
 
-const addNewFilesToWatch = (paths = []) => {
-  paths.filter(p => !wQueue.isWatched(p)).forEach(addNewFileToWatch);
-};
-
 watcher
   .on('add', filePath => {
-    const isMain = fileManager.isMainFile(filePath);
+    const isMain = manager.isMainFile(filePath);
     if (isMain) {
       compileLess(filePath, isMain);
     }
   })
   .on('change', filePath => {
-    compileLess(filePath, fileManager.isMainFile(filePath));
+    compileLess(filePath, manager.isMainFile(filePath));
   })
   .on('unlink', filePath => {
     unwatchFile(filePath);
   });
+
+module.exports = compileLess;

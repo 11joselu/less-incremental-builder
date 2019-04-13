@@ -28,7 +28,7 @@ describe('Test utils functions', () => {
     expect(utils.existsDirectory('notFounded')).to.be.false;
   });
 
-  it('Should create paths for less plugin', () => {
+  /*   it('Should create paths for less plugin', () => {
     const file = createLessFile();
     const graph = createGraph(file.path);
     const paths = utils.getPathsForLessPlugin(
@@ -42,7 +42,7 @@ describe('Test utils functions', () => {
       .that.include('__tests__/build/');
 
     fs.unlinkSync(file.path);
-  });
+  }); */
 
   after(() => {
     fs.rmdirSync(path.dirname(path.join(dir, 'test')));

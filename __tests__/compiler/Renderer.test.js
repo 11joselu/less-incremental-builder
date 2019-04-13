@@ -1,24 +1,23 @@
 const expect = require('chai').expect;
 
 const Renderer = require('../../lib/compiler/Renderer');
+const FileManager = require('../../lib/compiler/FileManager');
 
 describe('Test Renderer', () => {
   let renderer;
 
   beforeEach(() => {
-    renderer = new Renderer([], process.cwd());
+    const manager = new FileManager('test.less', 'test.css', process.cwd());
+    renderer = new Renderer(manager, []);
   });
 
   it('Should create a correct instance', () => {
-    expect(renderer)
-      .to.be.an('object')
-      .to.have.own.property('cwd', process.cwd())
-      .that.is.a('string');
+    expect(renderer.getManager()).to.be.an.instanceof(FileManager);
+
     expect(renderer)
       .to.be.an('object')
       .to.have.own.property('paths')
       .that.is.a('array');
-    expect(renderer.map).to.be.an.instanceOf(Map);
     expect(renderer.getLessPlugin()).to.be.an('array').that.is.not.empty;
     expect(renderer.getLessPlugin()[0])
       .to.have.own.property('install')
@@ -40,9 +39,5 @@ describe('Test Renderer', () => {
     expect(renderer.getPaths()).to.include(newPath);
     renderer.pushNewPath(newPath);
     expect(renderer.getPaths()).to.include(newPath);
-  });
-
-  it('Should get empty key inside map', () => {
-    expect(renderer.getFileHash('')).to.be.a('undefined');
   });
 });

@@ -2,7 +2,6 @@ const expect = require('chai').expect;
 const { unlinkSync, existsSync } = require('fs');
 const { createLessFile, createStream } = require('../test-functions');
 const through = require('through2').obj;
-const RequiredParamException = require('../../lib/exceptions/RequiredParamException');
 const FileManager = require('../../lib/compiler/FileManager');
 const path = require('path');
 
@@ -18,12 +17,6 @@ describe('Test FileManager', () => {
     inputFile = file.path;
     cwd = process.cwd();
     manager = new FileManager(inputFile, outputFile, cwd);
-  });
-
-  it('Should create a throw Error', () => {
-    expect(() => {
-      manager = new FileManager();
-    }).to.throw(RequiredParamException);
   });
 
   it('Should create a correct instance', () => {
@@ -53,6 +46,10 @@ describe('Test FileManager', () => {
 
   it('Should return dirname from output file', () => {
     expect(manager.getOutputDir()).to.equal(path.dirname(outputFile));
+  });
+
+  it('Should get an empty hash', () => {
+    expect(manager.getFileHash('asd')).to.be.undefined;
   });
 
   describe('Test streams', () => {
