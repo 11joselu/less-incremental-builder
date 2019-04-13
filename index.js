@@ -6,7 +6,7 @@ const argv = require('yargs').argv;
 const path = require('path');
 
 const logger = require('./lib/logger');
-const loadGraph = require('./lib/graph/loader');
+const createGraph = require('./lib/graph/create');
 const Renderer = require('./lib/compiler/Renderer');
 const FileManager = require('./lib/compiler/FileManager');
 const WatcherQueue = require('./lib/Watcher/WatcherQueue');
@@ -20,7 +20,7 @@ if (!utils.existsDirectory(fileManager.getOutputDir())) {
   utils.mkdirp(fileManager.getOutputDir());
 }
 
-const graph = loadGraph(fileManager.getInputFile());
+const graph = createGraph(fileManager.getInputFile());
 const wQueue = new WatcherQueue(Object.keys(graph.index));
 
 console.reset();
@@ -141,7 +141,7 @@ const getImportStateFromPath = filePath => {
   let newImports = [];
   let removedImports = [];
   try {
-    const pathGraph = loadGraph(filePath);
+    const pathGraph = createGraph(filePath);
     const pathImports = pathGraph.index[filePath];
     newImports = pathImports.imports.filter(
       newImp => !imports.includes(newImp)

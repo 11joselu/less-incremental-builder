@@ -2,7 +2,7 @@ const expect = require('chai').expect;
 const utils = require('../../lib/utils-functions');
 const fs = require('fs');
 const path = require('path');
-const loadGraph = require('../../lib/graph/loader');
+const createGraph = require('../../lib/graph/create');
 const DirectoryAlreadyExistsException = require('../../lib/exceptions/DirectoryAlreadyExistsException');
 
 const { createLessFile } = require('../test-functions');
@@ -30,7 +30,7 @@ describe('Test utils functions', () => {
 
   it('Should create paths for less plugin', () => {
     const file = createLessFile();
-    const graph = loadGraph(file.path);
+    const graph = createGraph(file.path);
     const paths = utils.getPathsForLessPlugin(
       graph,
       process.cwd(),

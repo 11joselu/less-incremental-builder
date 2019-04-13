@@ -1,9 +1,9 @@
 const expect = require('chai').expect;
-const loadGraph = require('../../lib/graph/loader');
+const createGraph = require('../../lib/graph/create');
 const { unlinkSync } = require('fs');
 const { createLessFile } = require('../test-functions');
 
-describe('Test Graph loader', () => {
+describe('Test Graph creation', () => {
   let file;
 
   beforeEach(() => {
@@ -11,19 +11,19 @@ describe('Test Graph loader', () => {
   });
 
   it('Should create a graph object', () => {
-    const graph = loadGraph(file.path);
+    const graph = createGraph(file.path);
     expect(graph).to.be.an('object');
   });
 
   it("Should have 'index' attribute", () => {
-    const graph = loadGraph(file.path);
+    const graph = createGraph(file.path);
     expect(graph.index)
       .to.be.an('object')
       .to.have.property(file.path);
   });
 
   it("Should have 'loadPaths' attribute", () => {
-    const graph = loadGraph(file.path);
+    const graph = createGraph(file.path);
     expect(graph).to.have.property('loadPaths');
     expect(graph.loadPaths)
       .to.be.an('array')
@@ -31,7 +31,7 @@ describe('Test Graph loader', () => {
   });
 
   it('Should add imports inside file object key', () => {
-    const graph = loadGraph(file.path);
+    const graph = createGraph(file.path);
     const graphFile = graph.index[file.path];
     expect(graphFile)
       .to.be.an('object')
@@ -42,7 +42,7 @@ describe('Test Graph loader', () => {
   });
 
   it('Should add all importedBy inside file object key', () => {
-    const graph = loadGraph(file.path);
+    const graph = createGraph(file.path);
     const graphFile = graph.index[file.path];
     expect(graphFile)
       .to.be.an('object')
