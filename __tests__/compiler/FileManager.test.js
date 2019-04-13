@@ -1,9 +1,11 @@
 const expect = require('chai').expect;
 const { unlinkSync, existsSync } = require('fs');
-const { createLessFile, createStream } = require('../test-functions');
 const through = require('through2').obj;
-const FileManager = require('../../lib/compiler/FileManager');
 const path = require('path');
+const sinon = require('sinon');
+
+const { createLessFile, createStream } = require('../test-functions');
+const FileManager = require('../../lib/compiler/FileManager');
 
 describe('Test FileManager', () => {
   let manager;
@@ -50,6 +52,42 @@ describe('Test FileManager', () => {
 
   it('Should get an empty hash', () => {
     expect(manager.getFileHash('asd')).to.be.undefined;
+  });
+
+  it('Should find hash an replace content', ended => {
+    expect(manager.replaceContentInMainFile('', '')).to.be.false;
+    const getFileHashStub = sinon
+      .stub(manager, 'getFileHash')
+      .returns(Date.now());
+
+    const getRootFileContentStringStub = sinon
+      .stub(manager, 'getRootFileContentString')
+      .returns('Tested content');
+
+    const overrideRootBufferContentStub = sinon
+      .stub(manager, 'overrideRootBufferContent')
+      .returns(undefined);
+
+    manager.replaceContentInMainFile('', 'content');
+
+    expect(getFileHashStub.calledOnce).to.be.true;
+    expect(getRootFileContentStringStub.calledOnce).to.be.true;
+    expect(overrideRootBufferContentStub.calledOnce).to.be.true;
+
+    ended();
+  });
+
+  it('Should replace correct content by a hashed match', () => {
+    const hash = Date.now();
+    const getRootFileContentStringStub = sinon
+      .stub(manager, 'getRootFileContentString')
+      .returns(`/*${hash}*/.test{color:red}/*${hash}*/`);
+
+    const newReplacement = '.replaced {}';
+    const newContent = manager.getReplacedContent(hash, newReplacement);
+
+    expect(getRootFileContentStringStub.calledOnce).to.be.true;
+    expect(newContent).to.include(newReplacement);
   });
 
   describe('Test streams', () => {
@@ -141,7 +179,7 @@ describe('Test FileManager', () => {
     }
   });
 
-  describe('Test override functions', () => {
+  describe('Test override content functions', () => {
     let hash = Date.now();
     let manager;
     let stream;
@@ -156,6 +194,8 @@ describe('Test FileManager', () => {
     });
 
     it('Should replace new content by hash', ended => {
+      const getFileHashStub = sinon.stub(manager, 'getFileHash').returns(hash);
+
       stream
         .pipe(
           through(function(file, enc, done) {
@@ -165,13 +205,17 @@ describe('Test FileManager', () => {
         )
         .on('finish', () => {
           const newContent = '.tested{color: tomato;}';
-          manager.replaceContentInRootFileByHash(hash, newContent);
+          const replaced = manager.replaceContentInMainFile(hash, newContent);
+
+          expect(getFileHashStub.calledOnce).to.be.true;
+          expect(replaced).to.be.true;
           expect(manager.getRootFileContentString()).to.have.string(newContent);
+
           ended();
         });
     });
 
-    it('Should replace new content by hash', ended => {
+    it('Should NOT replace content when hash not found', ended => {
       stream
         .pipe(
           through(function(file, enc, done) {
@@ -181,7 +225,7 @@ describe('Test FileManager', () => {
         )
         .on('finish', () => {
           hash = '';
-          manager.replaceContentInRootFileByHash(hash, '');
+          manager.replaceContentInMainFile(hash, '');
           expect(manager.getRootFileContentString()).to.equal(content);
           ended();
         });
