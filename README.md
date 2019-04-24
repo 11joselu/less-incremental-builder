@@ -18,13 +18,7 @@ npm install less-incremental-build --save-dev
 <h2>Usage</h2>
 
 ```bash
-node less-incremental-build --src <main_file>.less --output <output>.css
-```
-
-### With npx
-
-```bash
-npx less-incremental-build --src <main_file>.less --output <output>.css
+npm less-incremental-build --src <main_file>.less --output <output>.css
 ```
 
 ## API
@@ -40,6 +34,29 @@ The main file to find all imports to watch (include himself).
 Type: `string`
 
 Output file to compile less styles. Should be a css file (If not exists, it will be created)
+
+### config
+
+Type: `string`
+
+Path of your custom config file. Do not pass `src` or `output` as argument, should be added inside your custom config file.
+
+<h2>Config File</h2>
+
+`watcher.config.js`
+
+```javascript
+module.exports = {
+  src: './static/less/main.less',
+  output: './build/styles.css',
+  // Add less Options
+  lessOptions: { sourceMap: { sourceMapFileInline: true } },
+};
+```
+
+```bash
+npm less-incremental-build --config watcher.config.js
+```
 
 <h2>Maintainers</h2>
 

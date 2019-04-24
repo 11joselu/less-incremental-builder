@@ -14,9 +14,21 @@ const utils = require('./lib/utils-functions');
 const validateArguments = require('./lib/validator/paramsValidator');
 
 const cwd = process.cwd();
+let config = {};
+
+if (argv.config) {
+  if (argv.input || argv.output) {
+    logger.warnInfo(
+      '`input` or `output` argument will be override by config file options'
+    );
+  }
+
+  config = require(argv.config);
+  argv.src = config.src;
+  argv.output = config.output;
+}
 
 validateArguments(argv.src, argv.output);
-
 const manager = new FileManager(argv.src, argv.output, cwd);
 
 if (!utils.existsDirectory(manager.getOutputDir())) {
@@ -24,10 +36,13 @@ if (!utils.existsDirectory(manager.getOutputDir())) {
 }
 
 const graph = new GraphStructure(manager);
-const renderer = new Renderer(manager, graph.getFoundedPaths());
-const wQueue = new WatcherQueue(graph.getFiles());
+const renderer = new Renderer(
+  manager,
+  graph.getFoundedPaths(),
+  config.lessOptions
+);
 
-console.reset();
+const wQueue = new WatcherQueue(graph.getFiles());
 
 let isFirstBuildValid = false;
 let isCompiling = false;
@@ -36,15 +51,15 @@ const watcher = chokidar.watch(wQueue.getQueue());
 const compileLess = (newFile, isMainFile = false) => {
   console.reset();
 
+  if (isCompiling) {
+    return;
+  }
+
   const stream = vfs.src(newFile);
 
   stream
     .pipe(
       through(function(file, enc, done) {
-        if (isCompiling) {
-          return;
-        }
-
         let str = file.contents.toString();
 
         const { removedImports, newImports } = graph.getImportStateFromFile(
