@@ -9,8 +9,9 @@ const WatcherQueue = require('./lib/Watcher/WatcherQueue');
 const Compiler = require('./lib/compiler/Compiler');
 const utils = require('./lib/utils-functions');
 const validateArguments = require('./lib/validator/paramsValidator');
-
+const path = require('path');
 const cwd = process.cwd();
+
 let config = {};
 
 if (argv.config) {
@@ -20,7 +21,7 @@ if (argv.config) {
     );
   }
 
-  config = require(argv.config);
+  config = require(path.resolve(argv.config));
   argv.src = config.src;
   argv.output = config.output;
 }
