@@ -1,6 +1,6 @@
 {
   "name": "less-incremental-builder",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Build less file with a incremental builder",
   "main": "lib/index.js",
   "scripts": {

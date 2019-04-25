@@ -4,3 +4,8 @@ __tests__/build/*.less
 
 coverage/
 .nyc_output/
+
+static/
+build/
+
+*.config.js
