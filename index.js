@@ -44,15 +44,27 @@ const watcher = chokidar.watch(filesToWatch);
 const wQueue = new WatcherQueue(filesToWatch, watcher);
 const compiler = new Compiler(graph, wQueue, lessRenderer);
 
+function callBuildSuccess(compilePromise) {
+  compilePromise.then(buildResult => {
+    if (typeof config.onBuildSuccess === 'function') {
+      config.onBuildSuccess(buildResult);
+    }
+  });
+}
+
 watcher
   .on('add', filePath => {
     const isMain = manager.isMainFile(filePath);
     if (isMain) {
-      compiler.compile(filePath, isMain);
+      const compilePromise = compiler.compile(filePath, isMain);
+      callBuildSuccess(compilePromise);
     }
   })
   .on('change', filePath => {
-    compiler.compile(filePath, manager.isMainFile(filePath));
+    const isMain = manager.isMainFile(filePath);
+
+    const compilePromise = compiler.compile(filePath, isMain);
+    callBuildSuccess(compilePromise);
   })
   .on('unlink', filePath => {
     compiler.unwatchFile(filePath);

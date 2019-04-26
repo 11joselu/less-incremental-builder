@@ -43,16 +43,7 @@ Path of your custom config file. Do not pass `src` or `output` as argument, shou
 
 <h2>Config File</h2>
 
-`watcher.config.js`
-
-```javascript
-module.exports = {
-  src: './static/less/main.less',
-  output: './build/styles.css',
-  // Add less Options
-  lessOptions: { sourceMap: { sourceMapFileInline: true } },
-};
-```
+See [watcher.config.js](/examples/watcher.config.js)
 
 ```bash
 npm less-incremental-build --config watcher.config.js
