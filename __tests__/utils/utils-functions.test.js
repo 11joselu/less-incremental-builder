@@ -2,10 +2,7 @@ const expect = require('chai').expect;
 const utils = require('../../lib/utils-functions');
 const fs = require('fs');
 const path = require('path');
-const createGraph = require('../../lib/graph/create');
 const DirectoryAlreadyExistsException = require('../../lib/exceptions/DirectoryAlreadyExistsException');
-
-const { createLessFile } = require('../test-functions');
 
 const dir = path.resolve(process.cwd(), '__tests__', 'build', 'test');
 
@@ -28,21 +25,14 @@ describe('Test utils functions', () => {
     expect(utils.existsDirectory('notFounded')).to.be.false;
   });
 
-  /*   it('Should create paths for less plugin', () => {
-    const file = createLessFile();
-    const graph = createGraph(file.path);
-    const paths = utils.getPathsForLessPlugin(
-      graph,
-      process.cwd(),
-      'tested.less'
-    );
-
-    expect(paths)
-      .to.be.an('array')
-      .that.include('__tests__/build/');
-
-    fs.unlinkSync(file.path);
-  }); */
+  it('Should handle correct promises functions', async () => {
+    let [error] = await utils.promiseHandler(Promise.reject(new Error('')));
+    expect(error).to.be.instanceOf(Error);
+    [error] = await utils.promiseHandler(Promise.resolve(new Error('')));
+    expect(error).to.be.instanceOf(Error);
+    const [, data] = await utils.promiseHandler(Promise.resolve(true));
+    expect(data).to.be.true;
+  });
 
   after(() => {
     fs.rmdirSync(path.dirname(path.join(dir, 'test')));

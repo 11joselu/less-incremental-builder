@@ -1,8 +1,8 @@
 {
   "name": "less-incremental-builder",
-  "version": "1.2.1",
+  "version": "1.2.5",
   "description": "Build less file with a incremental builder",
-  "main": "lib/index.js",
+  "main": "index.js",
   "scripts": {
     "test": "mocha ./__tests__/**/*.js",
     "coverage": "NODE_ENV=test && nyc --reporter=text-lcov npm test | coveralls",

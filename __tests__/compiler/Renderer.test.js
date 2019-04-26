@@ -1,32 +1,32 @@
 const expect = require('chai').expect;
 
-const Renderer = require('../../lib/compiler/Renderer');
+const LessRenderer = require('../../lib/compiler/LessRenderer');
 const FileManager = require('../../lib/compiler/FileManager');
 
 describe('Test Renderer', () => {
-  let renderer;
+  let lessRenderer;
 
   beforeEach(() => {
     const manager = new FileManager('test.less', 'test.css', process.cwd());
-    renderer = new Renderer(manager, []);
+    lessRenderer = new LessRenderer(manager, []);
   });
 
   it('Should create a correct instance', () => {
-    expect(renderer.getManager()).to.be.an.instanceof(FileManager);
+    expect(lessRenderer.getManager()).to.be.an.instanceof(FileManager);
 
-    expect(renderer)
+    expect(lessRenderer)
       .to.be.an('object')
       .to.have.own.property('paths')
       .that.is.a('array');
-    expect(renderer.getHasherPlugin()).to.be.an('object');
-    expect(renderer.getHasherPlugin())
+    expect(lessRenderer.getHasherPlugin()).to.be.an('object');
+    expect(lessRenderer.getHasherPlugin())
       .to.have.own.property('install')
       .that.is.a('function');
   });
 
   it('Should render styles', () => {
     const toBuild = '';
-    const resultPromise = renderer.render(toBuild);
+    const resultPromise = lessRenderer.render(toBuild);
     expect(resultPromise).to.be.a('promise');
     resultPromise.then(({ css }) => {
       expect(css).to.equal(toBuild);
@@ -35,18 +35,18 @@ describe('Test Renderer', () => {
 
   it('Should push new path inside array of paths', () => {
     const newPath = 'static';
-    renderer.pushNewPath(newPath);
-    expect(renderer.getPaths()).to.include(newPath);
-    renderer.pushNewPath(newPath);
-    expect(renderer.getPaths()).to.include(newPath);
+    lessRenderer.pushNewPath(newPath);
+    expect(lessRenderer.getPaths()).to.include(newPath);
+    lessRenderer.pushNewPath(newPath);
+    expect(lessRenderer.getPaths()).to.include(newPath);
   });
 });
 
 describe('Test Renderer with config file', () => {
   it('Should create a correct file object', () => {
     const manager = new FileManager('test.less', 'test.css', process.cwd());
-    const renderer = new Renderer(manager, [], {});
-    const lessOptions = renderer.getLessOptions();
+    const lessRenderer = new LessRenderer(manager, [], {});
+    const lessOptions = lessRenderer.getLessOptions();
     expect(lessOptions).to.be.an('object');
     expect(lessOptions).to.have.own.property('paths');
     expect(lessOptions).to.have.own.property('plugins');
@@ -54,8 +54,8 @@ describe('Test Renderer with config file', () => {
 
   it('Should create a correct file object with paths attributes', () => {
     const manager = new FileManager('test.less', 'test.css', process.cwd());
-    const renderer = new Renderer(manager, [], { paths: ['tested'] });
-    const lessOptions = renderer.getLessOptions();
+    const lessRenderer = new LessRenderer(manager, [], { paths: ['tested'] });
+    const lessOptions = lessRenderer.getLessOptions();
     expect(lessOptions.paths)
       .to.be.an('array')
       .that.includes('tested');
@@ -63,8 +63,8 @@ describe('Test Renderer with config file', () => {
 
   it('Should create a correct file object with plugins attributes', () => {
     const manager = new FileManager('test.less', 'test.css', process.cwd());
-    const renderer = new Renderer(manager, [], { plugins: ['tested'] });
-    const lessOptions = renderer.getLessOptions();
+    const lessRenderer = new LessRenderer(manager, [], { plugins: ['tested'] });
+    const lessOptions = lessRenderer.getLessOptions();
     expect(lessOptions.plugins)
       .to.be.an('array')
       .that.includes('tested');
@@ -73,11 +73,11 @@ describe('Test Renderer with config file', () => {
   it('Should throw erros with not correct file object', () => {
     const manager = new FileManager('test.less', 'test.css', process.cwd());
     expect(() => {
-      new Renderer(manager, [], { paths: 'tested' });
+      new LessRenderer(manager, [], { paths: 'tested' });
     }).to.throw();
 
     expect(() => {
-      new Renderer(manager, [], { plugins: 'tested' });
+      new LessRenderer(manager, [], { plugins: 'tested' });
     }).to.throw();
   });
 });
